@@ -155,6 +155,7 @@ public class RewriteAlgebraicSimplificationDynamic extends HopRewriteRule
 			hi = removeUnnecessaryRightIndexing(hop, hi, i);  //e.g., X[,1] -> X, if output == input size 
 			hi = removeEmptyLeftIndexing(hop, hi, i);         //e.g., X[,1]=Y -> matrix(0,nrow(X),ncol(X)), if nnz(X)==0 and nnz(Y)==0 
 			hi = removeUnnecessaryLeftIndexing(hop, hi, i);   //e.g., X[,1]=Y -> Y, if output == input dims 
+			hi = removeUnnecessaryRightIndexingOperations(hop, hi, i);
 			if(OptimizerUtils.ALLOW_OPERATOR_FUSION)
 				hi = fuseLeftIndexingChainToAppend(hop, hi, i);   //e.g., X[,1]=A; X[,2]=B -> X=cbind(A,B), iff ncol(X)==2 and col1/2 lix
 			hi = removeUnnecessaryCumulativeOp(hop, hi, i);   //e.g., cumsum(X) -> X, if nrow(X)==1;
@@ -2632,4 +2633,35 @@ public class RewriteAlgebraicSimplificationDynamic extends HopRewriteRule
 	
 		return hi;
 	}
+
+	private static Hop removeUnnecessaryRightIndexingOperations(Hop parent, Hop hi, int pos)
+			throws HopsException
+	{
+		if(hi instanceof IndexingOp && hi.getInput().get(0) instanceof LeftIndexingOp)
+		{
+			ArrayList<Hop> leftIndexOpInput = hi.getInput().get(0).getInput();
+			ArrayList<Hop> rightIndexOpInput = hi.getInput();
+			Hop rowL1 = leftIndexOpInput.get(2);
+			Hop rowU1 = leftIndexOpInput.get(3);
+			Hop colL1 = leftIndexOpInput.get(4);
+			Hop colU1 = leftIndexOpInput.get(5);
+			Hop rowL2 = rightIndexOpInput.get(1);
+			Hop rowU2 = rightIndexOpInput.get(2);
+			Hop colL2 = rightIndexOpInput.get(3);
+			Hop colU2 = rightIndexOpInput.get(4);
+
+			if(HopRewriteUtils.isEqualValue(rowL1,rowL2) && HopRewriteUtils.isEqualValue(rowU1,rowU2) &&
+					HopRewriteUtils.isEqualValue(colL1,colL2) && HopRewriteUtils.isEqualValue(colU1,colU2))
+			{
+				Hop newHop = leftIndexOpInput.get(1);
+				HopRewriteUtils.replaceChildReference(parent, hi, newHop, pos);
+				HopRewriteUtils.cleanupUnreferenced(hi);
+				hi = newHop;
+			}
+		}
+		return hi;
+	}
+
+
+
 }
