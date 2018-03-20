@@ -24,13 +24,22 @@ import org.apache.sysml.test.integration.TestConfiguration;
 import org.apache.sysml.test.utils.TestUtils;
 
 public class RewriteUnnecessaryRighIndexingRemovalTest extends AutomatedTestBase {
-	@java.lang.Override
-	public void setUp() {
+
+	private static final String TEST_NAME = "RewriteUnnecessaryRighIndexingRemoval";
+	private final static String TEST_DIR = "functions/misc/";
+	private static final String TEST_CLASS_DIR = TEST_DIR + RewriteUnnecessaryRighIndexingRemovalTest.class.getSimpleName() + "/";
+
+	@Override
+	public void setUp()
+	{
+		TestUtils.clearAssertionInformation();
+		addTestConfiguration( TEST_NAME, new TestConfiguration(TEST_CLASS_DIR, TEST_NAME, new String[] { "R" }) );
 
 	}
 
 	private void testUnnecessaryRightIndexRemoval()
 	{
+
 
 	}
 }
